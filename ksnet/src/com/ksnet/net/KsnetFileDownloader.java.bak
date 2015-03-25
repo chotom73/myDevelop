@@ -1,0 +1,30 @@
+package com.ksnet.net;
+
+/**
+ *<ul> 
+ *  <li>(주)KSNET의 PG서비스 시스템으로부터 파일을 수신할 때 사용하는 API입니다.
+ * 	<li>실행 환경은 jre 1.5.x 이상입니다.  </li>
+ * 	<li>ksnetjapp.jar 를 classpath에 추가하여 com.ksnet.net.KsnetFileDownloader 를 실행하시면 됩니다.</li>
+ * 		ex) java -classpath ./ksnetjapp.jar com.ksnet.net.KsnetFileDownloader "c:/My documents/files/ksnet.20070113.txt" 2999199991 20070112
+ *</ul>
+ * @author 이훈구(foxworld@ksnet.co.kr)
+ * @version 1.0
+ * @since 2007.01.12.
+ * @see SocketFileHandler
+ */
+public class KsnetFileDownloader {
+	
+	/**
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		int rtn = SocketFileHandler.fileDownload("210.181.28.116", 9800, args[0], "EDI","0",args[1], args[2]);
+		if(rtn == 0) System.out.println("success!!");
+		else         System.out.println("fail!!");	
+		
+		
+			
+	}
+}
