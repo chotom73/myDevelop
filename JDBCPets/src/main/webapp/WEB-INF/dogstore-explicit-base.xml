@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		http://www.springframework.org/schema/jdbc  http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/security	http://www.springframework.org/schema/security/spring-security-3.1.xsd
+	">
+
+	<bean id="springSecurityFilterChain" class="org.springframework.security.web.FilterChainProxy">
+		<security:filter-chain-map path-type="ant">
+			<security:filter-chain pattern="/**" filters="
+				securityContextPersistenceFilter,
+				logoutFilter,
+				usernamePasswordAuthenticationFilter,
+				rememberMeAuthenticationFilter,
+				anonymousAuthenticationFilter,
+				exceptionTranslationFilter,
+				filterSecurityInterceptor" />
+		</security:filter-chain-map>
+	</bean>
+	
+	<bean id="securityContextPersistenceFilter" class="org.springframework.security.web.context.SecurityContextPersistenceFilter"/>
+	
+	<bean id="logoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter">
+		<constructor-arg value="/"/>
+		<constructor-arg>
+			<array>
+				<ref local="logoutHandler"/>
+				<ref local="rememberMeServices"/>
+			</array>
+		</constructor-arg>
+		<property name="filterProcessesUrl" value="/logout"/>
+	</bean>
+	<bean id="logoutHandler" class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>
+		
+	<bean id="usernamePasswordAuthenticationFilter" class="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter">
+		<property name="authenticationManager" ref="authenticationManager"/>
+		<property name="rememberMeServices" ref="rememberMeServices"/>
+		<property name="authenticationFailureHandler" ref="authenticationFailureHandler"/>
+	</bean>
+	
+	<bean id="authenticationFailureHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+		<property name="defaultFailureUrl" value="/login.do"/>
+	</bean>
+	
+	<bean id="rememberMeAuthenticationFilter" class="org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter">
+		<property name="rememberMeServices" ref="rememberMeServices"/>
+		<property name="authenticationManager" ref="authenticationManager"/>
+	</bean>
+	
+	<bean id="rememberMeServices" class="org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices">
+		<property name="key" value="jbcpPetStore"/>
+		<property name="tokenValiditySeconds" value="3600"/>
+		<property name="tokenRepository" ref="jdbcRememberMeTokenRepository"/>
+		<property name="userDetailsService" ref="jdbcUserServiceCustom"></property>
+	</bean>
+	
+	<bean id="jdbcRememberMeTokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<bean id="rememberMeAuthenticationProvider" class="org.springframework.security.authentication.RememberMeAuthenticationProvider">
+		<property name="key" value="jbcpPetStore"/>
+	</bean>
+	
+	<bean id="anonymousAuthenticationFilter" class="org.springframework.security.web.authentication.AnonymousAuthenticationFilter">
+		<property name="userAttribute" value="anoymousUser,ROLE_ANOYMOUS"/>
+		<property name="key" value="BF93JFJ091N0007H"/>
+	</bean>
+	
+	<bean id="exceptionTranslationFilter" class="org.springframework.security.web.access.ExceptionTranslationFilter">
+		<property name="authenticationEntryPoint" ref="authenticationEntryPoint"/>
+		<property name="accessDeniedHandler" ref="accessDeniedHandler"/>
+	</bean>
+	
+	<bean id="authenticationEntryPoint" class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+		<property name="loginFormUrl" value="/login.do"/>
+	</bean>
+	<bean id="accessDeniedHandler" class="org.springframework.security.web.access.AccessDeniedHandlerImpl">
+		<property name="errorPage" value="/accessDenied.do"/>
+	</bean>
+	
+	<bean id="filterSecurityInterceptor" class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager"/>
+	  	<property name="accessDecisionManager" ref="affirmativeBased"/>
+	  	<property name="securityMetadataSource">
+	    	<security:filter-security-metadata-source use-expressions="true">
+				<security:intercept-url pattern="/login.do" access="permitAll"/>
+				<security:intercept-url pattern="/home.do" access="permitAll"/>
+				<security:intercept-url pattern="/account/*.do" access="hasRole('ROLE_USER') and fullyAuthenticated"/>
+				<security:intercept-url pattern="/*.do" access="hasRole('ROLE_USER')"/>
+	    	</security:filter-security-metadata-source>
+	    </property>
+	</bean>
+	
+	<bean class="org.springframework.security.access.vote.AffirmativeBased" id="affirmativeBased">
+		<property name="decisionVoters">
+			<list>
+				<ref bean="roleVoter"/>
+				<ref bean="expressionVoter"/>
+				<ref bean="authenticatedVoter"/>
+			</list>
+		</property>
+	</bean>
+	<bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter"/>
+	<bean class="org.springframework.security.access.vote.AuthenticatedVoter" id="authenticatedVoter"/>
+	<bean id="daoAuthenticationProvider" class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+		<property name="userDetailsService" ref="jdbcUserServiceCustom"/>
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+		<property name="saltSource" ref="saltSource"/>
+	</bean>
+	<bean id="anonymousAuthenticationProvider" class="org.springframework.security.authentication.AnonymousAuthenticationProvider">
+		<property name="key" value="BF93JFJ091N0007H"/>
+	</bean>
+	
+	<bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
+		<property name="authenticationEventPublisher" ref="defaultAuthEventPublisher"/>
+		<property name="providers">
+			<list>
+				<ref local="daoAuthenticationProvider"/>
+				<ref local="anonymousAuthenticationProvider"/>
+				<ref local="rememberMeAuthenticationProvider"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="expressionHandler" class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler"/>
+	<bean id="expressionVoter" class="org.springframework.security.web.access.expression.WebExpressionVoter">
+		<!-- <property name="expressionHandler" ref="expressionHandler"/> -->
+		<property name="expressionHandler" ref="customExpressionHandler"/>
+	</bean>
+	
+	
+	<bean id="concurrencyFilter" class="org.springframework.security.web.session.ConcurrentSessionFilter">
+		<constructor-arg name="sessionRegistry" ref="sessionRegistry"/>
+		<constructor-arg name="expiredUrl" value="/login.do?error=expired"/>
+	</bean>
+	
+	<bean id="sas" class="org.springframework.security.web.authentication.session.ConcurrentSessionControlStrategy">
+   		<constructor-arg name="sessionRegistry" ref="sessionRegistry" />
+       <property name="maximumSessions" value="1" />
+    </bean>
+	
+	 
+	<bean id="sessionRegistry" class="org.springframework.security.core.session.SessionRegistryImpl"/>
+	
+	<!-- ************************************************** -->
+	<!-- Non-Security-Related Bean Configuration below here -->
+	<!-- ************************************************** -->
+		
+	<!-- Ch 4 In-memory HSQLDB -->	
+	<jdbc:embedded-database id="dataSource" type="HSQL">
+		<jdbc:script location="classpath:security-schema.sql"/>
+		<!-- Ch 4 Start
+		<jdbc:script location="classpath:test-data.sql"/>
+		 -->
+		 <!--  Ch 4 Remember Me Persistence -->
+		 <jdbc:script location="classpath:remember-me-schema.sql"/> 
+		<!-- Ch 4 Group Authentication Exercise -->
+		<jdbc:script location="classpath:test-users-groups-data.sql"/>
+	</jdbc:embedded-database>
+
+	<bean id="jdbcUserServiceCustom" class="com.packtpub.springsecurity.security.CustomJdbcDaoImpl">
+		<property name="dataSource" ref="dataSource"/>
+		<!-- Ch 4 Enable Groups Exercise -->
+		<property name="enableGroups" value="true"/>
+		<property name="enableAuthorities" value="false"/>
+		<!-- Ch 4 Salted User Exercise -->
+		<property name="usersByUsernameQuery">
+			<value>select username,password,enabled,salt from users where username = ?</value>
+		</property>
+	</bean>	
+	
+	<bean id="defaultAuthEventPublisher" class="org.springframework.security.authentication.DefaultAuthenticationEventPublisher"/>
+	
+	<bean id="auhenticationListener" class="org.springframework.security.authentication.event.LoggerListener"/>
+	<bean id="authorizationListener" class="org.springframework.security.access.event.LoggerListener"/>
+	
+	<bean id="customExpressionHandler" class="com.packtpub.springsecurity.security.CustomWebSecurityExpressionHandler"/>
+	
+	
+	<context:annotation-config />
+	<context:component-scan base-package="com.packtpub.springsecurity.dao"/>
+	<context:component-scan base-package="com.packtpub.springsecurity.security"/>
+	<context:component-scan base-package="com.packtpub.springsecurity.service"/>
+	
+
+</beans>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/jdbc  http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd
+		http://www.springframework.org/schema/security 
+		http://www.springframework.org/schema/security/spring-security-3.1.xsd
+	">
+
+
+	<global-method-security pre-post-annotations="enabled" access-decision-manager-ref="aclDecisionManager"/>
+
+	<http auto-config="true" use-expressions="true">
+		<custom-filter ref="requestHeaderFilter" before="FORM_LOGIN_FILTER"/>
+		<!-- <custom-filter ref="ipFilter" before="FILTER_SECURITY_INTERCEPTOR"/> -->
+		<intercept-url pattern="/login.do" access="permitAll"/>
+		<intercept-url pattern="/home.do" access="permitAll"/>
+		<intercept-url pattern="/account/*.do" access="hasRole('ROLE_USER') and fullyAuthenticated"/>
+		<intercept-url pattern="/*.do" access="hasRole('ROLE_USER')"/>
+		<form-login login-page="/login.do" />
+		<remember-me key="jbcpPetStore" token-validity-seconds="3600" data-source-ref="dataSource"/>
+		<logout invalidate-session="true" logout-success-url="" logout-url="/logout"/>
+		<session-management session-fixation-protection="migrateSession">
+			<concurrency-control max-sessions="1" expired-url="/login.do?error=expired"/>
+		</session-management>
+		<access-denied-handler error-page="/accessDenied.do"/>
+	</http>
+	
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider ref="signedRequestAuthenticationProvider"/>
+		<authentication-provider user-service-ref="jdbcUserServiceCustom">
+			<password-encoder ref="passwordEncoder">
+				<salt-source ref="saltSource"/>
+			</password-encoder>
+		</authentication-provider>
+	</authentication-manager>
+
+	<jdbc:embedded-database id="dataSource" type="HSQL">
+		<jdbc:script location="classpath:security-schema.sql"/>
+		<jdbc:script location="classpath:remember-me-schema.sql"/> 
+		<jdbc:script location="classpath:test-users-groups-data.sql"/>
+		<jdbc:script location="classpath:acl-schema.sql"/>
+		<jdbc:script location="classpath:test-acl-data.sql"/>
+	</jdbc:embedded-database>
+	
+
+	
+</beans:beans>

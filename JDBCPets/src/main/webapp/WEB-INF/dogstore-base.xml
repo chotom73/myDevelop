@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		http://www.springframework.org/schema/jdbc  http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+	">
+	<!--  Ch 4 PasswordEncoder exercise -->
+	<bean class="org.springframework.security.authentication.encoding.ShaPasswordEncoder" id="passwordEncoder"/>
+	<!--  Ch 4 Salt exercise -->	
+	<bean class="org.springframework.security.authentication.dao.ReflectionSaltSource" id="saltSource">
+		<!-- Ch 4 Salted User -->
+		<property name="userPropertyToUse" value="salt"/>
+	</bean>
+	<bean class="com.packtpub.springsecurity.security.DatabasePasswordSecurerBean" init-method="secureDatabase" depends-on="dataSource">
+		<property name="dataSource" ref="dataSource"/>	
+	</bean>
+
+	<!--  
+	<bean id="userService" class="com.packtpub.springsecurity.service.UserServiceImpl">
+		<security:intercept-methods>
+			<security:protect access="ROLE_ADMIN" method="changePassword"/>
+		</security:intercept-methods>
+	</bean>
+	-->
+	
+	<bean id="jdbcUserServiceCustom" class="com.packtpub.springsecurity.security.CustomJdbcDaoImpl">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="enableGroups" value="true"/>
+		<property name="enableAuthorities" value="false"/>
+		<!-- Ch 4 Salted User Exercise -->
+		<property name="usersByUsernameQuery">
+			<value>select username,password,enabled,salt from users where username = ?</value>
+		</property>
+	</bean>
+	
+	<bean id="ipFilter" class="com.packtpub.springsecurity.security.IPRoleAuthenticationFilter">
+		<property name="targetRole" value="ROLE_ADMIN"/>
+		<property name="allowedIPAddress">
+			<list>
+				<value>172.0.0.1</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="requestHeaderFilter" class="com.packtpub.springsecurity.security.RequestHeaderProcessingFIlter">
+		<property name="authenticationManager" ref="authenticationManager"></property>
+	</bean>
+	
+	<bean id="signedRequestAuthenticationProvider" class="com.packtpub.springsecurity.security.SignedUsernamePasswordAuthenticationProvider">
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+		<property name="saltSource" ref="saltSource"/>
+		<property name="userDetailsService" ref="jdbcUserServiceCustom"/>
+	</bean>
+	
+	
+	<bean id="aclDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">
+		<property name="decisionVoters">
+			<list>
+				<ref bean="categoryReadVoter"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="categoryReadVoter" class="org.springframework.security.acls.AclEntryVoter">
+		<constructor-arg ref="aclService"/>
+		<constructor-arg value="VOTE_CATEGORY_READ"/>
+		<constructor-arg>
+			<array>
+				<util:constant static-field="org.springframework.security.acls.domain.BasePermission.READ"/>
+			</array>
+		</constructor-arg>
+		<!-- <property name="prcessDomainObjectClass" value="com.packtpub.springsecurity.data.Category"/> -->
+	</bean>
+	
+	<bean id="aclService" class="org.springframework.security.acls.jdbc.JdbcAclService">
+		<constructor-arg ref="dataSource"/>
+		<constructor-arg ref="lookupStrategy"/>
+	</bean>
+	
+	<bean id="lookupStrategy" class="org.springframework.security.acls.jdbc.BasicLookupStrategy">
+		<constructor-arg ref="dataSource"/>
+		<constructor-arg ref="aclCache"/>
+		<constructor-arg ref="aclAuthzStrategy"/>
+		<constructor-arg ref="aclAuditLogger"/>
+	</bean>
+	
+	<bean id="aclCache" class="com.packtpub.springsecurity.security.NullAclCache"/>
+	<bean id="aclAuditLogger" class="org.springframework.security.acls.domain.ConsoleAuditLogger"/>
+	<bean id="aclAuthzStrategy" class="org.springframework.security.acls.domain.AclAuthorizationStrategyImpl">
+		<constructor-arg>
+			<array>
+				<ref local="aclAdminAuthority"/>
+				<ref local="aclAdminAuthority"/>
+				<ref local="aclAdminAuthority"/>
+			</array>
+		</constructor-arg>
+	</bean>
+	<bean id="aclAdminAuthority" class="org.springframework.security.core.authority.GrantedAuthorityImpl">
+		<constructor-arg value="ROLE_ADMIN"/>
+	</bean>
+	
+	
+	<context:annotation-config />
+	<context:component-scan base-package="com.packtpub.springsecurity.dao"/>
+	<context:component-scan base-package="com.packtpub.springsecurity.service"/>
+	<context:component-scan base-package="com.packtpub.springsecurity.security"/>
+
+</beans>
