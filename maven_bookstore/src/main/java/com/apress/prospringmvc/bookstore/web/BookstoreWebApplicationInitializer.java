@@ -41,8 +41,6 @@ public class BookstoreWebApplicationInitializer implements WebApplicationInitial
 	}
 
 	private AnnotationConfigWebApplicationContext createContext(final Class<?>... annotatedClasses) {
-		logger.debug("Test");
-		
 		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 		context.register(annotatedClasses);
 		return context;

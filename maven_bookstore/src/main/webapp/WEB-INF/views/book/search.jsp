@@ -4,19 +4,18 @@
 
 <form:form method="GET" modelAttribute="bookSearchCriteria">
     <fieldset>
-        <legend>Search Criteria</legend>
+        <legend>searchcriteria</legend>
         <table>
             <tr>
-                <td><form:label path="title">Title</form:label></td>
-											<td><form:input path="title"/></td>											
+                <td><form:label path="title">title</form:label></td>
+                <td><form:input path="title" /></td>
             </tr>
             <tr>
-            	<td><form:label path="category">Category</form:label></td>
-            	<td><form:select path="category" items="${categories}" itemValue="id" itemLabel="name"/></td>
-            </tr>                       
+                <td><form:label path="category">category</form:label></td>
+                <td><form:select path="category" items="${categories}" itemValue="id" itemLabel="name"/></td></tr>
         </table>
     </fieldset>
-    <button id="search">Search</button>
+    <button id="search">search</button>
 </form:form>
 
 <c:if test="${not empty bookList}">

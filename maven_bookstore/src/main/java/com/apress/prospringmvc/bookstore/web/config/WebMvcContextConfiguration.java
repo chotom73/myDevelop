@@ -2,31 +2,45 @@ package com.apress.prospringmvc.bookstore.web.config;
 
 import java.util.List;
 
+import om.apress.prospringmvc.bookstore.converter.StringToEntityConverterTest;
+
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.support.ConfigurableWebBindingInitializer;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import org.springframework.web.servlet.mvc.method.annotation.ServletWebArgumentResolverAdapter;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
+
+import com.apress.prospringmvc.bookstore.domain.Category;
 
 
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = { "com.apress.prospringmvc.bookstore" })
-public class WebMvcContextConfiguration extends WebMvcConfigurationSupport { //WebMvcConfigurerAdapter {
+public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebMvcConfigurationSupport {
 	
+	public RequestMappingHandlerAdapter rquestMappingHandlerAdapter() {
+		return null;
+	}
 	
+	/*
 	@Override
 	@Bean
 	public RequestMappingHandlerAdapter requestMappingHandlerAdapter() {
@@ -35,22 +49,20 @@ public class WebMvcContextConfiguration extends WebMvcConfigurationSupport { //W
 		webBindingInitializer.setDirectFieldAccess(true);
 		
 		return adapter;
-		
-		//return super.requestMappingHandlerAdapter();
 	}
+	*/
 	
-	/*
 	@Bean(name = "userHandlerMethodArgumentResolver")
 	public UserHandlerMethodArgumentResolver userHandlerMethodArgumentResolver() {
 	    return new UserHandlerMethodArgumentResolver();
 	}
-
+	
 	@Override
-	protected void addArgumentResolvers(
-			List<HandlerMethodArgumentResolver> argumentResolvers) {
+	public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
 		argumentResolvers.add(userHandlerMethodArgumentResolver());
 	}
-	*/	
+
+	
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
 		registry.addResourceHandler("/resources/**/*").addResourceLocations("classpath:/META-INF/web-resources/");
@@ -71,10 +83,45 @@ public class WebMvcContextConfiguration extends WebMvcConfigurationSupport { //W
 		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
 		viewResolver.setViewClass(JstlView.class);
 		viewResolver.setPrefix("/WEB-INF/views/");
-		viewResolver.setSuffix(".jsp");
-		
-		
+		viewResolver.setSuffix(".jsp");		
 		return viewResolver;
+	}
+	
+	@Override
+	public void addFormatters(final FormatterRegistry registry) {
+			registry.addFormatter(new DateFormatter("yyyy-MM-dd"));
+			registry.addConverter(categoryConverter());
+		}
+	
+	@Bean
+	public StringToEntityConverterTest categoryConverter() {
+		return new StringToEntityConverterTest(Category.class);
+    }
+	
+	// Interceptor 등록 Method Overried (추가 등록할 Interceptor 여기에)
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(localeChangeInterceptor());
+	}
+	
+	@Bean
+	public HandlerInterceptor localeChangeInterceptor() {
+		LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
+		localeChangeInterceptor.setParamName("lang");
+		return localeChangeInterceptor;
+	}
+	
+	@Bean
+	public LocaleResolver localeResolver() {
+		return new CookieLocaleResolver();
+	}
+	
+	@Bean
+	public MessageSource messageSource() {
+		ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+		messageSource.setBasename("classpath:/messages");
+		messageSource.setUseCodeAsDefaultMessage(true);
+		return messageSource;
 	}
 	
 }
