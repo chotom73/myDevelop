@@ -8,6 +8,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.format.FormatterRegistry;
@@ -28,6 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
+import com.apress.prospringmvc.bookstore.domain.Cart;
 import com.apress.prospringmvc.bookstore.domain.Category;
 
 
@@ -122,6 +125,13 @@ public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebM
 		messageSource.setBasename("classpath:/messages");
 		messageSource.setUseCodeAsDefaultMessage(true);
 		return messageSource;
+	}
+	
+	
+	@Bean
+	@Scope(value="session", proxyMode=ScopedProxyMode.TARGET_CLASS)
+	public Cart cart() {
+		return new Cart();
 	}
 	
 }

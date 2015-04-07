@@ -21,15 +21,19 @@
 <c:if test="${not empty bookList}">
     <table>
         <tr>
-            <th>title</th>
-            <th>description</th>
-            <th>price</th>
+            <th><spring:message code="book.title"/></th>
+            <th><spring:message code="book.description"/></th>
+            <th><spring:message code="book.price"/></th>
+            <th></th>
         </tr>
         <c:forEach items="${bookList}" var="book">
             <tr>
                 <td><a href="<c:url value="/book/detail/${book.id}"/>">${book.title}</a></td>
                 <td>${book.description}</td>
                 <td>${book.price}</td>
+                <td>
+                	<a href='<c:url value="/cart/add/${book.id}"/>'><spring:message code="book.addtocart"/></a>
+                </td>	
             </tr>
         </c:forEach>
     </table>
