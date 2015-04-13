@@ -14,24 +14,30 @@ import org.springframework.context.support.ReloadableResourceBundleMessageSource
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.DateFormatter;
+import org.springframework.web.context.request.WebRequestInterceptor;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
 import com.apress.prospringmvc.bookstore.domain.Cart;
 import com.apress.prospringmvc.bookstore.domain.Category;
+import com.apress.prospringmvc.bookstore.web.interceptor.CommonDataInterceptor;
+import com.apress.prospringmvc.bookstore.web.interceptor.SecurityHandlerInterceptor;
 
 
 @Configuration
@@ -42,6 +48,38 @@ public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebM
 	public RequestMappingHandlerAdapter rquestMappingHandlerAdapter() {
 		return null;
 	}
+	
+	// Interceptor 등록 Method Overried (추가 등록할 Interceptor 여기에)
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		InterceptorRegistration registration;
+		registration = registry.addInterceptor(localeChangeInterceptor());
+		//registration.addPathPatterns("/customers/**");
+		registry.addWebRequestInterceptor(commonDataInterceptor());
+		registry.addInterceptor(new SecurityHandlerInterceptor()).addPathPatterns("/customer/account", "/cart/checkout");
+	}
+	
+	@Bean
+	public HandlerInterceptor localeChangeInterceptor() {
+		LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
+		localeChangeInterceptor.setParamName("lang");
+		return localeChangeInterceptor;
+	}
+	
+	@Bean
+	public WebRequestInterceptor commonDataInterceptor() {
+		return new CommonDataInterceptor();
+	}
+	
+	/*
+	@Override
+	public RequestMappingHandlerMapping requestMappingHandlerMapping() {
+		// TODO Auto-generated method stub
+		RequestMappingHandlerMapping handlerMapping = super.requestMappingHandlerMapping();
+		handlerMapping.setInterceptors(getAllInterceptor());
+		return handlerMapping;
+	}	*/
+	
 	
 	/*
 	@Override
@@ -55,6 +93,14 @@ public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebM
 	}
 	*/
 	
+	/*
+	private Object[] getAllInterceptor() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	*/
+
+
 	@Bean(name = "userHandlerMethodArgumentResolver")
 	public UserHandlerMethodArgumentResolver userHandlerMethodArgumentResolver() {
 	    return new UserHandlerMethodArgumentResolver();
@@ -101,18 +147,7 @@ public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebM
 		return new StringToEntityConverterTest(Category.class);
     }
 	
-	// Interceptor 등록 Method Overried (추가 등록할 Interceptor 여기에)
-	@Override
-	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(localeChangeInterceptor());
-	}
-	
-	@Bean
-	public HandlerInterceptor localeChangeInterceptor() {
-		LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
-		localeChangeInterceptor.setParamName("lang");
-		return localeChangeInterceptor;
-	}
+
 	
 	@Bean
 	public LocaleResolver localeResolver() {

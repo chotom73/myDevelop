@@ -19,6 +19,7 @@ import com.apress.prospringmvc.bookstore.service.AuthenticationException;
 public class LoginController {
 
 	public static final String ACCOUNT_ATTRIBUTE = "account";
+	public static final String REQUESTED_URL = "REQUESTED_URL";
 	
 	@Autowired
 	private AccountService accountService;

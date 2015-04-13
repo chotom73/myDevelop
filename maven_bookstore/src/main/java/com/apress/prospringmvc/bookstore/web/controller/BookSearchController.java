@@ -50,5 +50,10 @@ public class BookSearchController {
     public Collection<Book> list(@ModelAttribute("bookSearchCriteria") BookSearchCriteria criteria) {
         return this.bookstoreService.findBooks(criteria);
     }
+    
+  @RequestMapping(value = "/book/search_pop", method = { RequestMethod.GET })
+  public Collection<Book> list_pop(@ModelAttribute("bookSearchCriteria") BookSearchCriteria criteria) {
+	  return this.bookstoreService.findBooks(criteria);
+    }
 
 }

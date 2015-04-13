@@ -5,6 +5,7 @@
 
 <html>
 <head>
+    <tiles:getAsString name="body" />
     <meta charset="utf-8">
     <c:set var="titleKey">        
         <tiles:getAsString name="title" />
