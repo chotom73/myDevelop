@@ -36,8 +36,8 @@ public class BookstoreWebApplicationInitializer implements WebApplicationInitial
 		WebApplicationContext dispatcherContext = createContext(WebMvcContextConfiguration.class);
 		DispatcherServlet dispatcherServlet = new DispatcherServlet(dispatcherContext);
 		ServletRegistration.Dynamic dispatcher = servletContext.addServlet(DISPATCHER_SERVLET_NAME, dispatcherServlet);
-   dispatcher.setLoadOnStartup(1);
-   dispatcher.addMapping("/");
+		dispatcher.setLoadOnStartup(1);
+		dispatcher.addMapping("/");
 	}
 
 	private AnnotationConfigWebApplicationContext createContext(final Class<?>... annotatedClasses) {

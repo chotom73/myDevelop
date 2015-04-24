@@ -33,23 +33,29 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import com.apress.prospringmvc.bookstore.domain.Cart;
 import com.apress.prospringmvc.bookstore.domain.Category;
+import com.apress.prospringmvc.bookstore.web.handler.EchoWebSocketHandler;
 import com.apress.prospringmvc.bookstore.web.interceptor.CommonDataInterceptor;
 import com.apress.prospringmvc.bookstore.web.interceptor.SecurityHandlerInterceptor;
 
 
 @Configuration
 @EnableWebMvc
+@EnableWebSocket
 @ComponentScan(basePackages = { "com.apress.prospringmvc.bookstore" })
-public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebMvcConfigurationSupport {
+public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter  implements WebSocketConfigurer { //WebMvcConfigurationSupport {
 	
 	public RequestMappingHandlerAdapter rquestMappingHandlerAdapter() {
 		return null;
 	}
 	
-	// Interceptor 등록 Method Overried (추가 등록할 Interceptor 여기에)
+	// Interceptor �깅줉 Method Overried (異붽� �깅줉��Interceptor �ш린��
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		InterceptorRegistration registration;
@@ -168,5 +174,21 @@ public class WebMvcContextConfiguration extends WebMvcConfigurerAdapter { //WebM
 	public Cart cart() {
 		return new Cart();
 	}
+	
+
+	@Override
+	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+		// WebSocket을 /echo 에 연결합니다.
+        registry.addHandler(echoHandler(), "/echo");
+
+        // SocketJS 지원 url을 /socketjs/echo에 연결합니다.
+        registry.addHandler(echoHandler(), "/socketjs/echo").withSockJS();		
+	}
+	
+    @Bean
+    public WebSocketHandler echoHandler() {
+        return new EchoWebSocketHandler();
+    }
+
 	
 }
